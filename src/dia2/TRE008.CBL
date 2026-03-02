@@ -1,0 +1,35 @@
+       ID DIVISION.
+         PROGRAM-ID. TRE008.
+       ENVIRONMENT DIVISION. 
+       CONFIGURATION SECTION. 
+
+       SPECIAL-NAMES. 
+           DECIMAL-POINT IS COMMA.
+
+       DATA DIVISION. 
+       WORKING-STORAGE SECTION.
+
+       01 AREAS-DE-SALVAMENTO. 
+           05 AS-CONTADOR   PIC 9(002)        VALUE ZEROS.
+           05 AS-SOMA       PIC 9(006)V99     VALUES ZEROS.
+           05 AS-MEDIA      PIC 9(006)V99     VALUE ZEROS. 
+           05 AS-SOMA-EDIT  PIC ZZZZZ9        VALUE ZEROS. 
+           05 AS-MEDIA-EDIT PIC ZZZZZ9,99     VALUE ZEROS.
+
+       PROCEDURE DIVISION. 
+           PERFORM VARYING AS-CONTADOR FROM 1 BY 1
+                UNTIL AS-CONTADOR > 50
+
+                COMPUTE AS-SOMA = AS-SOMA + AS-CONTADOR
+           END-PERFORM 
+
+           COMPUTE AS-MEDIA = AS-SOMA / 50
+
+           MOVE AS-SOMA TO AS-SOMA-EDIT
+           MOVE AS-MEDIA TO AS-MEDIA-EDIT
+
+           DISPLAY 'SOMA = '   AS-SOMA-EDIT
+           DISPLAY 'MEDIA = ' AS-MEDIA-EDIT
+
+           GOBACK. 
+           

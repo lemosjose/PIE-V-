@@ -1,0 +1,32 @@
+       IDENTIFICATION DIVISION. 
+       PROGRAM-ID. TRE0011.
+
+       ENVIRONMENT DIVISION. 
+       CONFIGURATION SECTION. 
+
+       SPECIAL-NAMES. 
+           DECIMAL-POINT IS COMMA.
+
+       DATA DIVISION. 
+       WORKING-STORAGE SECTION.
+
+       01 AREAS-DE-SALVAMENTO. 
+           05 AS-CONTADOR   PIC 9(003)        VALUE ZERO.
+           05 AS-SOMA       PIC 9(006)V99     VALUE     1.
+           05 AS-SOMA-EDIT  PIC ZZZZZ9        VALUE ZERO.  
+           05 SOMADOR       PIC 9(006)V99     VALUE ZERO.
+       PROCEDURE DIVISION.
+           INITIALIZE AS-CONTADOR AS-SOMA
+
+           PERFORM VARYING AS-CONTADOR FROM 1 BY 1
+              UNTIL AS-CONTADOR > 150 
+    
+              COMPUTE AS-SOMA = AS-SOMA + 2
+              COMPUTE SOMADOR = SOMADOR + AS-SOMA
+           END-PERFORM 
+
+           MOVE SOMADOR  TO  AS-SOMA-EDIT
+           
+           DISPLAY 'SOMA = ' AS-SOMA-EDIT
+    
+           GOBACK.
