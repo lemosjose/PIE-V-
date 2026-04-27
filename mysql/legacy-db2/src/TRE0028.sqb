@@ -31,9 +31,13 @@
                INCLUDE SQLCA
            END-EXEC.
 
+           EXEC SQL BEGIN DECLARE SECTION END-EXEC.
+
            EXEC SQL
                INCLUDE TREDFUN
            END-EXEC.
+
+           EXEC SQL END DECLARE SECTION END-EXEC.
       ****************************************************************
       *    AREA DE DECLARACAO DE CURSORES                            *
       ****************************************************************
@@ -139,6 +143,5 @@
 
            DISPLAY 'TERMINO ANORMAL'
            GOBACK.
-       .
        9000-CANCELA-EXIT.
            EXIT.

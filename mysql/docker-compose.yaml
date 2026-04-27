@@ -1,0 +1,43 @@
+services:
+  mariadb:
+    image: mariadb:11
+    environment:
+      LANG: pt_BR.UTF-8
+      LC_ALL: pt_BR.UTF-8
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-tre}
+      MARIADB_USER: ${MARIADB_USER:-tre}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-trepass}
+    ports:
+      - "${MARIADB_PORT:-3306}:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "127.0.0.1", "-p${MARIADB_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  cobol:
+    build: .
+    environment:
+      LANG: pt_BR.UTF-8
+      LC_ALL: pt_BR.UTF-8
+      COB_PRE_LOAD: /lib/x86_64-linux-gnu/libodbc.so.2
+      ODBC_DRIVER: "MariaDB Unicode"
+      MARIADB_HOST: mariadb
+      MARIADB_PORT: 3306
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-tre}
+      MARIADB_USER: ${MARIADB_USER:-tre}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-trepass}
+    volumes:
+      - ./src:/cobol/src
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    command: ["sleep", "infinity"]
+
+volumes:
+  mariadb_data:

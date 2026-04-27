@@ -21,3 +21,4 @@ db2 connect reset
 echo ""
 echo ">> Banco de dados inicializado com sucesso!"
 echo "========================================"
+

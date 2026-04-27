@@ -23,8 +23,8 @@ db2 connect to testdb
 
 # Passo 1: Pre-compilacao (PREP da IBM)
 # Gera TRE0028.cbl (INCLUDE -> COPY, EXEC SQL -> CALLs DB2)
-echo ">> Passo 1: prep TRE0028.sqc"
-db2 prep TRE0028.sqc bindfile
+echo ">> Passo 1: prep TRE0028.sqb"
+db2 prep TRE0028.sqb bindfile
 
 echo ""
 echo ">> .cbl gerado com sucesso!"
