@@ -2,5 +2,4 @@
 *.cbl
 *.bnd
 *.o
-src/TRE0028
 specs/*.pdf
