@@ -5,9 +5,9 @@ services:
       LANG: pt_BR.UTF-8
       LC_ALL: pt_BR.UTF-8
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
-      MARIADB_DATABASE: ${MARIADB_DATABASE:-tre}
-      MARIADB_USER: ${MARIADB_USER:-tre}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-trepass}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-UFIBGE}
+      MARIADB_USER: ${MARIADB_USER:-cobol}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-cobol}
     ports:
       - "${MARIADB_PORT:-3306}:3306"
     volumes:
@@ -29,9 +29,9 @@ services:
       ODBC_DRIVER: "MariaDB Unicode"
       MARIADB_HOST: mariadb
       MARIADB_PORT: 3306
-      MARIADB_DATABASE: ${MARIADB_DATABASE:-tre}
-      MARIADB_USER: ${MARIADB_USER:-tre}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-trepass}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-UFIBGE}
+      MARIADB_USER: ${MARIADB_USER:-cobol}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-cobol}
     volumes:
       - ./src:/cobol/src
     depends_on:

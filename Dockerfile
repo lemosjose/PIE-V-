@@ -12,7 +12,7 @@ RUN apt-get update && \
       odbc-mariadb \
       mariadb-client \
       ca-certificates && \
-    sed -i 's/^# *\\(pt_BR.UTF-8\\)/\\1/' /etc/locale.gen && \
+    sed -i 's/^# *\(pt_BR.UTF-8\)/\1/' /etc/locale.gen && \
     locale-gen && \
     rm -rf /var/lib/apt/lists/*
 

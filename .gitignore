@@ -1,5 +1,7 @@
 .env
-*.cbl
-*.bnd
-*.o
 specs/*.pdf
+
+# Compiled COBOL binaries
+src/CIDADES_UF
+src/TRE0028_ODBC
+src/*.o

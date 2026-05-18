@@ -1,119 +1,109 @@
-# TRE0028 — COBOL com DB2 (Exemplo de Cursor)
+# COBOL + MariaDB via ODBC — Relatório de Cidades por UF
 
-Programa COBOL com SQL embarcado (embedded SQL) que utiliza um **cursor** para consultar a tabela `TRE.FUNCIONARIO`, filtrando por código de cargo e exibindo matrícula e nome dos funcionários.
+Programa GnuCOBOL que conecta ao **MariaDB** via **unixODBC** e gera um relatório com a quantidade de cidades por UF (dados do IBGE, 5570 municípios).
 
-Baseado no **Capítulo 11 — Acesso ao Banco de Dados** do livro *Linguagem de Programação COBOL para Mainframe* (Jaime Wojciechowski).
+## Estrutura do Projeto
+
+```
+mariadb/
+├── docker-compose.yaml      # MariaDB + container COBOL
+├── Dockerfile               # Imagem COBOL (GnuCOBOL + unixODBC)
+├── .env.example             # Variáveis de ambiente
+├── initdb/                  # Scripts executados no primeiro start do MariaDB
+│   ├── 01-schema.sql        #   Cria tabela Cidade
+│   └── 02-cidades-data.sql  #   Insere 5570 municípios
+├── src/                     # Fontes COBOL
+│   ├── CIDADES_UF.cbl       #   Relatório de cidades por UF (grade 9x3)
+│   └── TRE0028_ODBC.cbl     #   Exemplo anterior (tabela funcionario)
+└── specs/                   # Material de referência
+    └── Cap11_Cobol_Db2.pdf
+```
 
 ## Pré-requisitos
 
-- **Podman** (ou Docker) + **podman-compose** (ou docker-compose)
-- ~2 GB de espaço em disco (imagem DB2 Community Edition)
+- **Podman** com `podman-compose` (ou Docker)
 
 ## Como Usar
 
 ### 1. Configurar ambiente
 
 ```bash
-cp env.example .env
+cp .env.example .env
 ```
 
 ### 2. Subir os containers
 
 ```bash
-podman-compose up -d
+sudo podman-compose up -d --build
 ```
 
-> ⏳ Na primeira execução, o DB2 pode levar **2-3 minutos** para inicializar.
-> Acompanhe com: `podman-compose logs -f db2`
-> Aguarde a mensagem **"Setup has completed"**.
+> Na primeira execução, o MariaDB importa ~5600 registros automaticamente via `initdb/`.
+> Acompanhe o progresso com:
+> ```bash
+> sudo podman-compose logs -f mariadb
+> ```
+> Aguarde até ver que o MariaDB está aceitando conexões.
 
-### 3. Inicializar o banco de dados
+### 3. Compilar o programa COBOL
 
 ```bash
-podman-compose exec db2 su - db2inst1 -c "/cobol/scripts/init-db.sh"
+sudo podman-compose exec cobol cobc -x -o CIDADES_UF CIDADES_UF.cbl -lodbc
 ```
 
-Isso cria o schema `TRE`, a tabela `FUNCIONARIO` e insere os dados de exemplo.
-
-### 4. Pré-compilar o programa (PREP)
+### 4. Executar
 
 ```bash
-podman-compose exec db2 su - db2inst1 -c "/cobol/scripts/compile-and-run.sh"
+sudo podman-compose exec cobol ./CIDADES_UF
 ```
 
-O PREP da IBM converte o `.sqc` em `.cbl`, substituindo:
+### Saída esperada
 
-- `EXEC SQL INCLUDE SQLCA` → `COPY sqlca.cpy`
-- `EXEC SQL INCLUDE TREDFUN` → `COPY TREDFUN`
-- `EXEC SQL ... END-EXEC` → chamadas (CALL) ao runtime DB2
+```
+Relatorio de Cidades por UF (IBGE)
 
-### 5. Compilar com GnuCOBOL
+-----------------------------------------------------------------
+| AC   | AL   | AP   | AM   | BA   | CE   | DF   | ES   | GO   |
+|   22 |  102 |   16 |   62 |  417 |  184 |    1 |   78 |  246 |
+-----------------------------------------------------------------
+| MA   | MT   | MS   | MG   | PA   | PB   | PR   | PE   | PI   |
+|  217 |  141 |   79 |  853 |  144 |  223 |  399 |  185 |  224 |
+-----------------------------------------------------------------
+| RJ   | RN   | RS   | RO   | RR   | SC   | SP   | SE   | TO   |
+|   92 |  167 |  497 |   52 |   15 |  295 |  645 |   75 |  139 |
+-----------------------------------------------------------------
+```
+
+## Parar / Remover
 
 ```bash
-podman-compose exec cobol cobc -x TRE0028.cbl
+sudo podman-compose down          # para os containers
+sudo podman-compose down -v       # para e remove o volume (dados do MariaDB)
 ```
 
----
+## Recompilar após alterar o fonte
 
-## Fluxo de Compilação
-
-```
-TRE0028.sqc  ──(prep)──►  TRE0028.cbl  ──(cobc -x)──►  TRE0028 (executável)
-     │                         │
-     │ SQL embarcado           │ COBOL puro + CALLs DB2
-     │ EXEC SQL...END-EXEC     │ COPY sqlca.cpy
-     │ INCLUDE SQLCA           │ COPY TREDFUN
+```bash
+sudo podman-compose exec cobol cobc -x -o CIDADES_UF CIDADES_UF.cbl -lodbc
+sudo podman-compose exec cobol ./CIDADES_UF
 ```
 
----
+## Fluxo de compilação (ODBC, sem `prep`)
 
-## Dados da Tabela
-
-```sql
-CREATE TABLE FUNCIONARIO (
-    FUN_NUM_MATRIC  NUMERIC(5) NOT NULL,
-    FUN_NOME_FUNC   VARCHAR(50),
-    FUN_CD_CARGO    NUMERIC(2),
-    PRIMARY KEY (FUN_NUM_MATRIC)
-);
+```
+CIDADES_UF.cbl ──(cobc -x -lodbc)──► CIDADES_UF (executável)
+       │
+       │ COBOL puro com CALLs à API ODBC:
+       │ SQLAllocHandle, SQLDriverConnect,
+       │ SQLExecDirect, SQLFetch, etc.
 ```
 
-| FUN_NUM_MATRIC | FUN_NOME_FUNC | FUN_CD_CARGO |
-|----------------|---------------|--------------|
-| 1000           | Antônio       | 2            |
-| 1100           | Abadio        | 3            |
-| 1200           | Antônio       | 4            |
-
----
-
-## Limitações Conhecidas
-
-### 1. `cobc -x` pode falhar sem bibliotecas DB2
-
-O arquivo `.cbl` gerado pelo `db2 prep` contém chamadas (`CALL`) a funções do runtime DB2 (ex: `SQLGSTRT`, `SQLGCALL`). A compilação com `cobc -x` precisa **linkar** contra `libdb2.so`, que só existe dentro do container DB2.
-
-O container `cobol` (Ubuntu + GnuCOBOL) **não possui** essas bibliotecas. Possíveis soluções:
-
-- Compilar GnuCOBOL **dentro do container DB2** (compilação from source, pois o DB2 usa RHEL UBI 8 e o pacote EPEL tem conflitos de dependência com `libjson-c`)
-- Instalar o **IBM Data Server Driver** no container COBOL (requer download manual da IBM)
-- Copiar `libdb2.so` do container DB2 para o container COBOL e adicionar ao `LD_LIBRARY_PATH`
-
-### 3. Imagem DB2 é pesada (~2 GB)
-
-A imagem `icr.io/db2_community/db2` é baseada em **Red Hat UBI 8** e pesa cerca de 2 GB. O primeiro `podman-compose up` pode demorar significativamente dependendo da conexão.
-
-### 4. Container DB2 requer modo privilegiado
-
-O DB2 necessita de `privileged: true` no container para funcionar corretamente. Isso é uma exigência da imagem oficial da IBM.
-
-### 5. `prep` é específico do DB2
-
-O comando `prep` (pré-compilador de SQL embarcado) é uma ferramenta proprietária da IBM, disponível apenas dentro do container DB2. Não existe um equivalente open-source exato. Alternativas como **OCESQL** (Open COBOL ESQL) existem, mas usam ODBC ao invés do protocolo nativo DB2.
-
----
+O GnuCOBOL **não tem SQL embarcado nativo**. A abordagem usada é chamar
+as funções da API ODBC diretamente via `CALL` no COBOL. Não é necessário
+pré-compilador (`prep`, `OCESQL`, etc.).
 
 ## Referências
 
-- [IBM DB2 Community Edition (Docker)](https://www.ibm.com/docs/en/db2/11.5?topic=system-db2-community-edition-docker)
 - [GnuCOBOL](https://gnucobol.sourceforge.io/)
+- [unixODBC](http://www.unixodbc.org/)
+- [MariaDB ODBC Connector](https://mariadb.com/kb/en/mariadb-connector-odbc/)
 - Cap. 11 — *Linguagem de Programação COBOL para Mainframe* (Jaime Wojciechowski)
